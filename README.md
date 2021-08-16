@@ -27,6 +27,13 @@ Note: This won't build/deploy the image. At this point you'll see 503s. Build/De
 ./doit.sh destroy --profile <profile> --region <region>
 ```
 
+## Misc
+
+To determine the dns name of the load balancer, use 
+```
+ aws --profile <profile> --region <region> elbv2 describe-load-balancers
+```
+you'll have to specifically specify "https://<dns_name>" because the HTTP endpoint just returns a 404.
 
 ## Issues and Fixes
 
