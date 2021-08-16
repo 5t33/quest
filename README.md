@@ -1,76 +1,54 @@
-# A quest in the clouds
+# A quest in the clouds - Steven Staley Submission
 
-### Q. What is this quest?
+## Dependencies
+* Docker
+* Nodejs 10
+* jq
 
-It is a fun way to assess your cloud skills. It is also a good representative sample of the work we do at Rearc. Quest is a webapp made with node.js and golang.
+## Setup 
 
-### Q. Do I need to be an expert in node.js and golang?
+Note: This won't build/deploy the image. At this point you'll see 503s. Build/Deploy is next step.
 
-No. The starting point of the quest app is `npm install && npm start`. That is all the node.js you need to know. And you wont even see golang.
+```
+./doit.sh create-infra --profile <profile> --region <region>
+```
 
-### Q. So what skills should I have?
+## Deployment 
 
-AWS. General cloud concepts, especially networking. Docker (containerization). IaC (Infrastructure as code). Linux/Unix. Git. TLS certs is a plus.
+```
+./doit.sh build --profile <profile> --region <region> --secret-word "SecretWord"
+./doit.sh deploy --profile <profile> --region <region> --secret-word "SecretWord"
+```
 
-### Q. What do I have to do?
+## Tear Down 
 
-You may do all or some of the following tasks. Please read over the complete list before starting.
+```
+./doit.sh destroy --profile <profile> --region <region>
+```
 
-1. If you know how to use git, start a git repository (local-only is acceptable) and commit all of your work to it.
-2. Deploy the app in AWS and navigate to the index page. Use Linux 64-bit as your OS (Amazon Linux preferred).
-3. Deploy the app in a Docker container. Use `node:10` as the base image.
-4. Inject an environment variable (`SECRET_WORD`) in the Docker container. The value of `SECRET_WORD` should be the secret word discovered on the index page of the application.
-5. Deploy a load balancer in front of the app.
-6. Use Infrastructure as Code (IaC) to "codify" your deployment. Terraform is ideal, but use whatever you know, e.g. CloudFormation, CDK, Deployment Manager, etc.
-7. Add TLS (https). You may use locally-generated certs.
 
-### Q. How do I know I have solved these stages?
+## Issues and Fixes
 
-Each stage can be tested as follows (where `<ip_or_host>` is the location where the app is deployed):
+  1) Dockerfile ENV vars don't change the build, and since this is using a deploy to 'latest', it means the image actually has to be removed & re-uploaded to deploy new env vars. 
 
-1. Index page (contains the secret word) - `http(s)://<ip_or_host>[:port]/`
-2. Docker check - `http(s)://<ip_or_host>[:port]/docker`
-3. Secret Word check - `http(s)://<ip_or_host>[:port]/secret_word`
-4. Load Balancer check  - `http(s)://<ip_or_host>[:port]/loadbalanced`
-5. TLS check - `http(s)://<ip_or_host>[:port]/tls`
+  How can this be fixed?
 
-### Q. Do I have to do all these?
+  A better approach would be to use ECS's native environment variable injection via the task definition. This can be done in the task definition's "container definition" with Terraform or by using the [ecs-cli compose create command](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/cmd-ecs-cli-compose-create.html) along with a docker-compose file & ecs-parameter file. Using the latter method, the task definition's ARN would be passed to the ECS Terraform & ignored. This is nice because it allows you to separate management of the task definition from Terraform which leaves the door open to using deployment providers like CodeDeploy without getting out of sync with Terraform state (while still maintaining your task definition in a configuration file). 
 
-You may do whichever, and however many, of the tasks above as you'd like. We suspect that once you start, you won't be able to stop. It's addictive.
+  2) The "secret word" isn't so secret. 
 
-### Q. What do I have to submit?
+  How can this be fixed?
 
-1. Your work assets, as one or both of the following:
-  - A link to a hosted git repository.
-  - A ZIP file containing your project directory. Include the `.git` sub-directory if you used git.
-2. Proof of completion, as one or both of the following:
-  - A link to a hosted AWS deployment.
-  - One or more screenshots showing, at least, the index page of the final deployment.
+  If this secret word were actually a secret, using `--build-arg` isn't the best option because it leaves traces. An alternatve would be to set up a secure SSM parameter, which can also be injected into the container using ECS's native support for SSM environment variables.
 
-Your work assets should include:
+  3) Not ent to end encrypted (TLS terminates at ALB)
 
-- IaC files, if you completed that task.
-- One or more Dockerfiles, if you completed that task.
-- A sensible README or other file(s) that contain instructions, notes, or other written documentation to help us review and assess your submission.
+  How can this be fixed?
 
-### Q. How long do I need to host my submission on AWS?
+  Add a proxy sidecar to the ECS deployment with certificate.
 
-You don't have to at all if you don't want to. You can run it in AWS, grab a screenshot, then tear it all down to avoid costs.
+  4) The source code doesn't recognize that it's in a docker container on Fargate. 
 
-If you _want_ to host it longer for us to view it, we recommend taking a screenshot anyway and sending that along with the link. Then you can tear down the quest whenever you want and we'll still have the screenshot. We recommend waiting no longer than one week after sending us the link before tearing it down.
+  Not sure how this can be fixed, but I thought I'd point it out. 
 
-### Q. What if I successfully complete all the challenges?
-
-We have many more for you to solve as a member of the Rearc team!
-
-### Q. What if I find a bug?
-
-Awesome! Tell us you found a bug in your submission to us, ideally in an email, and we'll talk more!
-
-### Q. What if I fail?
-
-There is no fail. Complete whatever you can and then submit your work. Doing _everything_ in the quest is not a guarantee that you will "pass" the quest, just like not doing something is not a guarantee you will "fail" the quest.
-
-### Q. Can I share this quest with others?
-
-No.
+   
