@@ -27,10 +27,13 @@ usage () {
     destroy
       --profile|-p       optional AWS profile flag will run commands with provided profile
       --region|-r        required AWS region
+    login-docker
+      --profile|-p       optional AWS profile flag will run commands with provided profile
+      --region|-r        required AWS region
     "
 }
 
-if [ "$1" != "build" ] && [ "$1" != "deploy" ] && [ "$1" != "create-infra" ] && [ "$1" != "destroy" ];
+if [ "$1" != "build" ] && [ "$1" != "deploy" ] && [ "$1" != "create-infra" ] && [ "$1" != "destroy" ] && [ "$1" != "login-docker" ];
 then
   echo "First argument must be one of \"build\",\"deploy\",\"create-infra\",\"destroy\"" && usage && exit 1;
 fi
@@ -53,6 +56,10 @@ while test $# -gt 0; do
     destroy)
       shift
       DESTROY="true"
+      ;;
+    login-docker)
+      shift
+      LOGIN_DOCKER="true"
       ;;
     --profile|-p)
       shift
@@ -96,6 +103,13 @@ if [ -n "$BUILD" ] && [ -z "$SECRET_WORD" ]; then print_red "--secret_word is a 
 if [ -z "$PROFILE" ]; then PROFILE="default"; fi
 
 if [ -z "$ENVIRONMENT" ]; then ENVIRONMENT="tst"; fi
+
+if [ -n "$LOGIN_DOCKER" ];
+then
+  ACCOUNT_ID=$(aws sts --profile $PROFILE get-caller-identity | jq ".Account" | sed "s/\"//g")
+  aws ecr --profile $PROFILE --region $REGION get-login-password | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+  exit 0
+fi
 
 if [ "$REGION" == "us-west-1" ]; then SHORT_REGION="usw1"; fi
 if [ "$REGION" == "us-west-2" ]; then SHORT_REGION="usw2"; fi

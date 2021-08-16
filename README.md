@@ -16,8 +16,9 @@ Note: This won't build/deploy the image. At this point you'll see 503s. Build/De
 ## Deployment 
 
 ```
+./doit.sh login-docker --profile <profile> --region <region>
 ./doit.sh build --profile <profile> --region <region> --secret-word "SecretWord"
-./doit.sh deploy --profile <profile> --region <region> --secret-word "SecretWord"
+./doit.sh deploy --profile <profile> --region <region>
 ```
 
 ## Tear Down 
@@ -29,7 +30,7 @@ Note: This won't build/deploy the image. At this point you'll see 503s. Build/De
 
 ## Issues and Fixes
 
-  1) Dockerfile ENV vars don't change the build, and since this is using a deploy to 'latest', it means the image actually has to be removed & re-uploaded to deploy new env vars. 
+  1) Dockerfile ENV vars don't change the build, and since this is using a deploy to 'latest', it means the image actually has to be removed & re-uploaded to deploy new env vars. It would be best to be able to change env vars dynamically. 
 
   How can this be fixed?
 
